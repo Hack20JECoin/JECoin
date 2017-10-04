@@ -1,0 +1,26 @@
+{
+  "name": "jecoin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/howard-wallis/JECoin.git"
+  },
+  "author": "Berk M & Howard Wallis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/howard-wallis/JECoin/issues"
+  },
+  "homepage": "https://github.com/howard-wallis/JECoin#readme",
+  "dependencies": {
+    "githubhook": "^1.9.1",
+    "ngrok": "^2.2.22"
+  }
+}
