@@ -59,7 +59,7 @@ contract JECoin is ERC20Interface {
 	}
 
 	// Constructor
-	function FixedSupplyToken() {
+	function JECoin() {
 		owner = msg.sender;
 		balances[owner] = _totalSupply;
 	}
@@ -98,10 +98,10 @@ contract JECoin is ERC20Interface {
 		address _to,
 		uint256 _amount
 	) returns (bool success) {
-		if (balances[_from] >= _amount
-			&& allowed[_from][msg.sender] >= _amount
-			&& _amount > 0
-			&& balances[_to] + _amount > balances[_to]) {
+		if (balances[_from] >= _amount && 
+			allowed[_from][msg.sender] >= _amount &&
+			_amount > 0 &&
+			balances[_to] + _amount > balances[_to]) {
 			balances[_from] -= _amount;
 			allowed[_from][msg.sender] -= _amount;
 			balances[_to] += _amount;
