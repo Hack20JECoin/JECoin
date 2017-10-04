@@ -47,6 +47,9 @@ contract JECoin is ERC20Interface {
 	// Balances for each account
 	mapping(address => uint256) balances;
 
+	// Mapping of Github username for each account
+	mapping(string => address) accounts;
+
 	// Owner of account approves the transfer of an amount to another account
 	mapping(address => mapping (address => uint256)) allowed;
 
@@ -122,5 +125,24 @@ contract JECoin is ERC20Interface {
 
 	function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
 		return allowed[_owner][_spender];
+	}
+
+	// Associate a username with an address
+	function registerUsername(string _username, address _owner) {
+		accounts[_username] = _owner;
+	}
+
+	// Update a username
+	function changeUsername(string _old, string _new) returns (bool success) {
+		if (accounts[_old] == address(0x0)) {
+			return false;
+		}
+		accounts[_new] = accounts[_old];
+		accounts[_old] = address(0x0);
+	}
+
+	// Disassociate an adress to a username
+	function deleteUsername(string _username) {
+		accounts[_username] = address(0x0);
 	}
 }
