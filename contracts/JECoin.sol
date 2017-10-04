@@ -35,11 +35,11 @@ contract ERC20Interface {
 	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract FixedSupplyToken is ERC20Interface {
-	string public constant symbol = "FIXED";
-	string public constant name = "Example Fixed Supply Token";
+contract JECoin is ERC20Interface {
+	string public constant symbol = "SHAFT";
+	string public constant name = "JECoin";
 	uint8 public constant decimals = 18;
-	uint256 _totalSupply = 1000000;
+	uint256 _totalSupply = 1000000000;
 	
 	// Owner of this contract
 	address public owner;
@@ -75,9 +75,9 @@ contract FixedSupplyToken is ERC20Interface {
 
 	// Transfer the balance from owner's account to another account
 	function transfer(address _to, uint256 _amount) returns (bool success) {
-		if (balances[msg.sender] >= _amount 
-			&& _amount > 0
-			&& balances[_to] + _amount > balances[_to]) {
+		if (balances[msg.sender] >= _amount &&
+			_amount > 0 &&
+			balances[_to] + _amount > balances[_to]) {
 			balances[msg.sender] -= _amount;
 			balances[_to] += _amount;
 			Transfer(msg.sender, _to, _amount);
