@@ -139,9 +139,10 @@ contract JECoin is ERC20Interface {
 		}
 		accounts[_new] = accounts[_old];
 		accounts[_old] = address(0x0);
+		return true;
 	}
 
-	// Disassociate an adress to a username
+	// Disassociate an address to a username
 	function deleteUsername(string _username) {
 		accounts[_username] = address(0x0);
 	}
