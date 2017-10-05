@@ -20,6 +20,14 @@ function processEvent(repo, ref, data) {
     // If PR is merged
     if (action === 'closed' && data.pull_request.merged === true) {
 
+        // Get the relevant address for the PR, send the funds from it to the PR creator
+
+    }
+
+    if (action === 'opened') {
+
+        // Get new instance of Cheer from deployed CheerFactory
+
     }
 
     console.log(data);
