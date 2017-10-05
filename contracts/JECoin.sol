@@ -47,17 +47,12 @@ contract JECoin is ERC20Interface {
 	// Balances for each account
 	mapping(address => uint256) balances;
 
-	// Mapping of Github username for each account
-	mapping(string => address) accounts;
-
 	// Owner of account approves the transfer of an amount to another account
 	mapping(address => mapping (address => uint256)) allowed;
 
 	// Functions with this modifier can only be executed by the owner
 	modifier onlyOwner() {
-		if (msg.sender != owner) {
-			throw;
-		}
+		require (msg.sender != owner);
 		_;
 	}
 
@@ -67,8 +62,8 @@ contract JECoin is ERC20Interface {
 		balances[owner] = _totalSupply;
 	}
 
-	function totalSupply() constant returns (uint256 totalSupply) {
-		totalSupply = _totalSupply;
+	function totalSupply() constant returns (uint256 total) {
+		return _totalSupply;
 	}
 
 	// What is the balance of a particular account?
@@ -125,30 +120,5 @@ contract JECoin is ERC20Interface {
 
 	function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
 		return allowed[_owner][_spender];
-	}
-
-	// Associate a username with an address
-	function registerUsername(string _username, address _owner) {
-		accounts[_username] = _owner;
-	}
-
-	// Read the address of a username
-	function addressOf(string _username) constant returns (address a) {
-		return accounts[_username];
-	}
-
-	// Update a username
-	function changeUsername(string _old, string _new) returns (bool success) {
-		if (accounts[_old] == address(0x0)) {
-			return false;
-		}
-		accounts[_new] = accounts[_old];
-		accounts[_old] = address(0x0);
-		return true;
-	}
-
-	// Disassociate an address to a username
-	function deleteUsername(string _username) {
-		accounts[_username] = address(0x0);
 	}
 }
