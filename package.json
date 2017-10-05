@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/howard-wallis/JECoin#readme",
   "dependencies": {
-    "githubhook": "^1.9.1",
+    "express": "^4.16.1",
+    "express-github-hook": "^1.0.0",
     "ngrok": "^2.2.22"
   }
 }
