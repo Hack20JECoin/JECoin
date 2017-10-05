@@ -132,6 +132,11 @@ contract JECoin is ERC20Interface {
 		accounts[_username] = _owner;
 	}
 
+	// Read the address of a username
+	function addressOf(string _username) constant returns (address a) {
+		return accounts[_username];
+	}
+
 	// Update a username
 	function changeUsername(string _old, string _new) returns (bool success) {
 		if (accounts[_old] == address(0x0)) {
