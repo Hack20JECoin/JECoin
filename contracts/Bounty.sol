@@ -1,47 +1,33 @@
 pragma solidity ^0.4.8;
 
 import './JECoin.sol';
+import './GithubDetails.sol';
 
 contract Bounty {
 	JECoin coin;
-	address owner = msg.sender;
 	address payee;
 	uint creationTime = now;
 	GithubDetails githubDetails;
 	bool complete = false; // could be true if pr merged but payee not known
 
-	struct GithubDetails {
-		string githubOwner;
-		string githubRepo;
-		uint pullRequest;
-		string pullRequestOpener;
-	}
-
-	function Bounty(address JECoinAddress, string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener) {
+	function Bounty(GithubDetails _githubDetails) {
 		coin = JECoin(JECoinAddress);
-		githubDetails = GithubDetails(githubOwner, githubRepo, pullRequest, pullRequestOpener);
+		githubDetails = _githubDetails;
 	}
 
-	function fund() payable external returns (bool success) {
-		// add funds to the bounty
+	function balance() returns (uint bountyBalance) {
+		return coin.balanceOf(address(this));
 	}
 
 	function finish() {
 		complete = true;
 	}
 
-	function execute() returns (bool success) {
-		if (!complete) {
-			return false;
-		}
-		// send funds to payee
-		// fail if payee address not known
-		// remove self from Coordinator.bounties?
-		// destroy self once completed succesfully:
-		return true;
+	function kill(address payout) {
+		selfdestruct(payout);
 	}
 
-	function kill() {
-		selfdestruct(owner);
+	function() payable external returns (bool success) {
+		// TODO  add funds to the bounty?
 	}
 }
