@@ -10,8 +10,8 @@ contract Bounty {
 	GithubDetails githubDetails;
 	bool complete = false; // could be true if pr merged but payee not known
 
-	function Bounty(GithubDetails _githubDetails) {
-		coin = JECoin(JECoinAddress);
+	function Bounty(address coinAddress, GithubDetails _githubDetails) {
+		coin = JECoin(coinAddress);
 		githubDetails = _githubDetails;
 	}
 
@@ -25,9 +25,5 @@ contract Bounty {
 
 	function kill(address payout) {
 		selfdestruct(payout);
-	}
-
-	function() payable external returns (bool success) {
-		// TODO  add funds to the bounty?
 	}
 }

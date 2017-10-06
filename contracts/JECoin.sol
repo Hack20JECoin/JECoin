@@ -9,7 +9,7 @@ pragma solidity ^0.4.8;
 // https://github.com/ethereum/EIPs/issues/20
 contract ERC20Interface {
 	// Get the total token supply
-	function totalSupply() constant returns (uint256 totalSupply);
+	function totalSupply() constant returns (uint256 total);
 
 	// Get the account balance of another account with address _owner
 	function balanceOf(address _owner) constant returns (uint256 balance);

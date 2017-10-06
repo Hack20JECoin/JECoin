@@ -4,8 +4,10 @@ import './Bounty.sol';
 import './GithubDetails.sol';
 
 contract BountyFactory {
-	function newBounty(GithubDetails githubDetails) returns (address bountyAddress) {
-		Bounty bounty = (new Bounty(githubDetails));
+	address _coinAddress;
+	function newBounty(address coinAddress, GithubDetails githubDetails) returns (address bountyAddress) {
+		_coinAddress = coinAddress;
+		Bounty bounty = (new Bounty(coinAddress, githubDetails));
 		return address(bounty);
 	}
 }
