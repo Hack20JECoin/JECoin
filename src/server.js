@@ -1,5 +1,6 @@
 const http = require('http');
 const express = require('express')
+const cors = require('cors')
 const app = express()
 
 const port = 3000;
@@ -37,6 +38,11 @@ app.use('/webhook', require('express-github-hook')(options));
 
 app.get('/cheer', () => {
     console.log('cheer');
+})
+
+app.get('/prbounty', cors(), (req, res, next) => {
+    console.log(req.query)
+    res.json({amount: 0.3003})
 })
 
 app.listen(port, () => {
