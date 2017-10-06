@@ -2,8 +2,10 @@ pragma solidity ^0.4.8;
 
 import './JECoin.sol';
 import './BountyFactory.sol';
+import './GithubDetails.sol';
 
 contract Coordinator {
+	JECoin coin;
 	BountyFactory bountyFactory;
 
 	// All usernames known to the system, either with or without a wallet address
@@ -22,19 +24,29 @@ contract Coordinator {
 		bountyFactory = BountyFactory(bountyFactoryAddress);
 	}
 
-	// Associate a username with an address - user sends JECoin to this in order to register their git name
-	function register(string username) payable external returns (bool success) { // does this need to be payable for users to send a tx to it?
-		// can we get username from data instead?
+	// Register - Associate a username with an address - user sends ether to this in order to register their git name
+	function() payable external returns (bool success) {
+		username = msg.data; // TODO decode this
+
 		usernames.accounts[username] = msg.sender;
 		usernames.registered[username] = true;
-		executeUnpaidBounties(username);
-		// return the money?
 
+		// Check two things:
+		// 1. Are there any bounties associated with this username?
+		// 2. If so, of those bounties, are any completed and waiting to execute? Execute them.
+		address[] bountyAddresses = bounties[username];
+		for (uint i = 0; i < bountyAddresses.length; i++) {
+			Bounty bounty = Bounty(bountyAddresses[i]);
+			bounty.payee = msg.sender;
+			executeBounty(bounty);
+		}
+
+		// TODO Return any eth sent to this address
 	}
 
+
 	// Update a username
-	function changeUsername(string oldUsername, string newUsername) payable external returns (bool success) {
-		// msg.data?
+	function changeUsername(string oldUsername, string newUsername) external returns (bool success) {
 		if (usernames.accounts[oldUsername] == address(0x0)) {
 			return false;
 		}
@@ -55,31 +67,56 @@ contract Coordinator {
 	}
 
 	// Called by the server when PR is created
-	function createBounty() external {
-		msg.data;
-		string username = msg.data. ; // ?
-		Bounty bounty = bountyFactory.newBounty(...)
+	function createBounty(string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener) external {
+		Bounty bounty = bountyFactory.newBounty(string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener);
 		bounties[username] = bounty;
 	}
 
 	// Called by the server when PR is merged
-	function executeBountyOnMerge() external {
-		msg.data; // TODO determine which bounty we care about
+	function executeBountyOnMerge(string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener) external {
+		address bountyAddress = getBounty(githubOwner, githubRepo, pullRequest, pullRequestOpener);
+		Bounty bounty = Bounty(bountyAddress);
 		bounty.finish();
-		executeBounty(bounty)
+		executeBounty(bounty);
 	}
 
-	// When a username is registered, we should check if they have unpaid bounties to claim
-	function executeUnpaidBounties(string username) {
-		address[] bountyAddresses = bounties[username];
+	// Get the address of the bounty for a pull request
+	function getBounty(string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener) external returns (address bountyAddress) {
+		address[] bountyAddresses = bounties[pullRequestOpener];
+		GithubDetails githubDetails = GithubDetails(githubOwner, githubRepo, pullRequest, pullRequestOpener);
 		for (uint i = 0; i < bountyAddresses.length; i++) {
 			Bounty bounty = Bounty(bountyAddresses[i]);
-			executeBounty(bounty);
+			if (githubDetails.match(bounty.githubDetails)) {
+				return bountyAddresses[i];
+			}
 		}
 	}
 
+	// Number of JECoins owned by the bounty
+	function getBountyBalance(string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener) external returns (uint JECoinBalance) {
+		address bountyAddress = getBounty(githubOwner, githubRepo, pullRequest, pullRequestOpener);
+		return coin.balanceOf(bountyAddress);
+	}
+
+	// If the bounty is complete, pay it out and delete the bounty
 	function executeBounty(Bounty bounty) returns (bool success) {
-		bounty.execute();
-		bounty.kill();
+		if (!bounty.complete || bounty.payee == address(0x0)) {
+			return false;
+		}
+		// Pay the creator of the bounty
+		coin.transfer(bounty.payee, bounty.balance());
+		
+		// Remove the bounty from our store
+		address[] usernameBounties = bounties[bounty.githubDetails.pullRequestOpener];
+		for (uint i = 0; i < usernameBounties.length; i++) {
+			if (usernameBounties[i] == address(bounty)) {
+				usernameBounties[i] = address(0x0);
+				break;
+			}
+		}
+
+		// Destroy the bounty
+		bounty.kill(address(this));
+		return true;
 	}
 }
