@@ -1,3 +1,6 @@
+const Coordinator = artifacts.require("Coordinator")
+const JECoin = artifacts.require("JECoin")
+
 const http = require('http');
 const express = require('express')
 const cors = require('cors')
@@ -42,7 +45,13 @@ app.get('/cheer', () => {
 
 app.get('/prbounty', cors(), (req, res, next) => {
     console.log(req.query)
-    res.json({amount: 0.3003})
+    const coordinator = Coordinator.deployed();
+
+    var addressForUser = coordinator.Usernames.accounts.call(req.query.author);
+
+    const coinContract = JECoin.deployed();
+    const userBalance = coinContract.balanceOf.call(addressForUser)
+    res.json({amount: userBalance})
 })
 
 app.listen(port, () => {
