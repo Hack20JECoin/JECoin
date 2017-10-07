@@ -45,13 +45,16 @@ app.get('/cheer', () => {
 
 app.get('/prbounty', cors(), (req, res, next) => {
     console.log(req.query)
-    const coordinator = Coordinator.deployed();
+    Coordinator.deployed().then(coordinator -> {
+        var addressForUser = coordinator.Usernames.accounts.call(req.query.author);
 
-    var addressForUser = coordinator.Usernames.accounts.call(req.query.author);
+        JECoin.deployed().then(coinContract => {
+            const userBalance = coinContract.balanceOf.call(addressForUser)
+            res.json({amount: userBalance})
+        });
+    });
 
-    const coinContract = JECoin.deployed();
-    const userBalance = coinContract.balanceOf.call(addressForUser)
-    res.json({amount: userBalance})
+
 })
 
 app.listen(port, () => {
