@@ -5,17 +5,17 @@ import './GithubDetails.sol';
 
 contract Bounty {
 	JECoin coin;
-	address payee;
+	address public payee;
 	uint creationTime = now;
-	GithubDetails githubDetails;
-	bool complete = false; // could be true if pr merged but payee not known
+	GithubDetails public githubDetails;
+	bool public complete = false; // could be true if pr merged but payee not known
 
 	function Bounty(address coinAddress, GithubDetails _githubDetails) {
 		coin = JECoin(coinAddress);
 		githubDetails = _githubDetails;
 	}
 
-	function balance() returns (uint bountyBalance) {
+	function bountyBalance() returns (uint _bountyBalance) {
 		return coin.balanceOf(address(this));
 	}
 
@@ -25,5 +25,13 @@ contract Bounty {
 
 	function kill(address payout) {
 		selfdestruct(payout);
+	}
+
+	function setPayee(address newPayee) {
+		payee = newPayee;
+	}
+
+	function setGithubDetails(GithubDetails newGithubDetails) {
+		githubDetails = newGithubDetails;
 	}
 }

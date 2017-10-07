@@ -38,8 +38,8 @@ contract Coordinator {
 		address[] storage bountyAddresses = bounties[username];
 		for (uint i = 0; i < bountyAddresses.length; i++) {
 			Bounty bounty = Bounty(bountyAddresses[i]);
-			bounty.payee = msg.sender;
-			executeBounty(bounty);
+			bounty.setPayee(msg.sender);
+			executeBounty(bounty, bytes(username));
 		}
 
 		// TODO Return any eth sent to this address
@@ -69,8 +69,11 @@ contract Coordinator {
 
 	// Called by the server when PR is created
 	function createBounty(string githubOwner, string githubRepo, uint pullRequest, string pullRequestOpener) external {
-		Bounty bounty = bountyFactory.newBounty(githubOwner, githubRepo, pullRequest, pullRequestOpener);
-		bounties[pullRequestOpener] = bounty;
+		GithubDetails ghd = new GithubDetails(githubOwner, githubRepo, pullRequest, pullRequestOpener);
+		address coinAddress = address(coin);
+		address bountyAddress = bountyFactory.newBounty(coinAddress, ghd);
+		Bounty bounty = Bounty(bountyAddress);
+		bounties[pullRequestOpener].push(address(bounty));
 	}
 
 	// Called by the server when PR is merged
@@ -78,7 +81,7 @@ contract Coordinator {
 		address bountyAddress = this.getBounty(githubOwner, githubRepo, pullRequest, pullRequestOpener);
 		Bounty bounty = Bounty(bountyAddress);
 		bounty.finish();
-		executeBounty(bounty);
+		executeBounty(bounty, bytes(pullRequestOpener));
 	}
 
 	// Get the address of the bounty for a pull request
@@ -86,7 +89,7 @@ contract Coordinator {
 		address[] storage bountyAddresses = bounties[pullRequestOpener];
 		for (uint i = 0; i < bountyAddresses.length; i++) {
 			Bounty bounty = Bounty(bountyAddresses[i]);
-			if (bounty.githubDetails.isEquivalent(githubOwner, githubRepo, pullRequest, pullRequestOpener)) {
+			if (bounty.githubDetails().isEquivalent(githubOwner, githubRepo, pullRequest, pullRequestOpener)) {
 				return bountyAddresses[i];
 			}
 		}
@@ -99,15 +102,15 @@ contract Coordinator {
 	}
 
 	// If the bounty is complete, pay it out and delete the bounty
-	function executeBounty(Bounty bounty) returns (bool success) {
-		if (!bounty.complete || bounty.payee == address(0x0)) {
+	function executeBounty(Bounty bounty, bytes pullRequestOpener) returns (bool success) {
+		if (!bounty.complete() || bounty.payee() == address(0x0)) {
 			return false;
 		}
 		// Pay the creator of the bounty
-		coin.transfer(bounty.payee(), bounty.balance());
-		
+		coin.transfer(bounty.payee(), bounty.bountyBalance());
+
 		// Remove the bounty from our store
-		address[] storage usernameBounties = bounties[bounty.githubDetails.pullRequestOpener];
+		address[] storage usernameBounties = bounties[string(pullRequestOpener)];
 		for (uint i = 0; i < usernameBounties.length; i++) {
 			if (usernameBounties[i] == address(bounty)) {
 				usernameBounties[i] = address(0x0);
