@@ -1,6 +1,18 @@
-const Coordinator = artifacts.require("Coordinator")
-const JECoin = artifacts.require("JECoin")
+// Set up web3
+const Web3 = require('web3');
+const web3 = new Web3();
+web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
 
+// Set up contracts
+const TruffleContract = require('truffle-contract');
+
+const CoordinatorContract = require('../build/contracts/Coordinator.json')
+const JECoinContract = require('../build/contracts/JECoin.json')
+
+const Coordinator = TruffleContract(CoordinatorContract);
+const JECoin = TruffleContract(JECoinContract);
+
+// Other dependencies
 const http = require('http');
 const express = require('express')
 const cors = require('cors')
@@ -45,7 +57,7 @@ app.get('/cheer', () => {
 
 app.get('/prbounty', cors(), (req, res, next) => {
     console.log(req.query)
-    Coordinator.deployed().then(coordinator -> {
+    Coordinator.deployed().then(coordinator => {
         var addressForUser = coordinator.Usernames.accounts.call(req.query.author);
 
         JECoin.deployed().then(coinContract => {
