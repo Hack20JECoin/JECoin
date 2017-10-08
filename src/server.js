@@ -79,14 +79,12 @@ app.get('/cheer', () => {
 })
 
 app.get('/prbounty', cors(), (req, res, next) => {
-    console.log(req.query)
+    const params = req.query;
     Coordinator.at('0x742e82e5cc14ed9813513f1357cbe047acca4f71').then(coordinator => {
-        coordinator.addressOf.call(req.query.author).then(address => {
+        coordinator.getBounty.call(params.org, params.repo, params.prno, params.author).then(bountyAddress => {
             JECoin.at('0x1bd22fde3ddd123e2f8b82a6b96f3f94bb1e1104').then(coinContract => {
-                coinContract.balanceOf.call(address).then(balance => {
-                    console.log(balance);
-                    res.json({amount: balance})
-
+                coinContract.balanceOf.call(bountyAddress).then(balance => {
+                    res.json({amount: balance, address: bountyAddress})
                 }).catch(err => {
                     console.log(err);
                     res.status(500).send({err: err})
@@ -95,7 +93,7 @@ app.get('/prbounty', cors(), (req, res, next) => {
                 console.log(err);
                 res.status(500).send({err: err})
             });
-        });
+        })
 
     }).catch(err => {
         console.log(err)
