@@ -4,6 +4,8 @@ var web3 = new Web3();
 var provider = web3.setProvider(new Web3.providers.HttpProvider("http://localhost:8545"));
 // web3.eth.defaultAccount=web3.eth.accounts[0]
 
+const coordinatorAddress = '0x742e82e5cc14ed9813513f1357cbe047acca4f71'
+
 // Set up contracts
 const TruffleContract = require('truffle-contract');
 
@@ -27,14 +29,6 @@ if (typeof Coordinator.currentProvider.sendAsync !== "function") {
     };
 }
 
-// Coordinator.currentProvider.sendAsync = function () {
-//     return Coordinator.currentProvider.send.apply(Coordinator.currentProvider, arguments);
-// };
-//
-// JECoin.currentProvider.sendAsync = function () {
-//     return JECoin.currentProvider.send.apply(JECoin.currentProvider, arguments);
-// };
-
 // Other dependencies
 const http = require('http');
 const express = require('express')
@@ -55,18 +49,26 @@ const options = {
 
 function processEvent(repo, ref, data) {
     const action = data.action
+    const repoName = data.repository.name
+    const repoOwner = data.repository.owner.login
+    const pullRequestNumber = data.pull_request.number
+    const pullRequestAuthor = data.pull_request.owner.login
+    const isMerged = data.pull_request.merged
 
     // If PR is merged
-    if (action === 'closed' && data.pull_request.merged === true) {
+    if (action === 'closed' && isMerged === true) {
 
         // Get the relevant address for the PR, send the funds from it to the PR creator
 
     }
 
-    if (action === 'opened') {
+    if (action === 'opened' || action === 'reopened') {
 
-        // Get new instance of Cheer from deployed CheerFactory
-
+        Coordinator.at(coordinatorAddress).then(coordinator => {
+            coordinator.createBounty(repoOwner, repoName, pullRequestNumber, pullRequestAuthor)
+            .then(() => console.log('Successfully created bounty'))
+            .catch(err => console.log(`Error: ${err}`));
+        });
     }
 
     console.log(data);
@@ -80,7 +82,7 @@ app.get('/cheer', () => {
 
 app.get('/prbounty', cors(), (req, res, next) => {
     const params = req.query;
-    Coordinator.at('0x742e82e5cc14ed9813513f1357cbe047acca4f71').then(coordinator => {
+    Coordinator.at(coordinatorAddress).then(coordinator => {
         coordinator.getBounty.call(params.org, params.repo, params.prno, params.author).then(bountyAddress => {
             JECoin.at('0x1bd22fde3ddd123e2f8b82a6b96f3f94bb1e1104').then(coinContract => {
                 coinContract.balanceOf.call(bountyAddress).then(balance => {
