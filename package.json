@@ -23,6 +23,8 @@
     "cors": "^2.8.4",
     "express": "^4.16.1",
     "express-github-hook": "^1.0.0",
-    "ngrok": "^2.2.22"
+    "ngrok": "^2.2.22",
+    "truffle-contract": "^3.0.0",
+    "web3": "^1.0.0-beta.22"
   }
 }

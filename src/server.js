@@ -1,3 +1,41 @@
+// Set up web3
+var Web3 = require('web3');
+var web3 = new Web3();
+var provider = web3.setProvider(new Web3.providers.HttpProvider("http://localhost:8545"));
+// web3.eth.defaultAccount=web3.eth.accounts[0]
+
+// Set up contracts
+const TruffleContract = require('truffle-contract');
+
+const CoordinatorContract = require('../build/contracts/Coordinator.json')
+const JECoinContract = require('../build/contracts/JECoin.json')
+
+const Coordinator = TruffleContract(CoordinatorContract);
+const JECoin = TruffleContract(JECoinContract);
+
+JECoin.setProvider(web3.currentProvider)
+Coordinator.setProvider(web3.currentProvider)
+
+if (typeof JECoin.currentProvider.sendAsync !== "function") {
+    JECoin.currentProvider.sendAsync = function() {
+        return JECoin.currentProvider.send.apply(JECoin.currentProvider, arguments);
+    };
+}
+if (typeof Coordinator.currentProvider.sendAsync !== "function") {
+    Coordinator.currentProvider.sendAsync = function() {
+        return Coordinator.currentProvider.send.apply(Coordinator.currentProvider, arguments);
+    };
+}
+
+// Coordinator.currentProvider.sendAsync = function () {
+//     return Coordinator.currentProvider.send.apply(Coordinator.currentProvider, arguments);
+// };
+//
+// JECoin.currentProvider.sendAsync = function () {
+//     return JECoin.currentProvider.send.apply(JECoin.currentProvider, arguments);
+// };
+
+// Other dependencies
 const http = require('http');
 const express = require('express')
 const cors = require('cors')
@@ -7,7 +45,7 @@ const port = 3000;
 
 const options = {
     treatRequest: function(event, repo, ref, data) {
-        switch(event) {
+        switch (event) {
             case 'pull_request':
                 processEvent(repo, ref, data);
                 break;
@@ -42,7 +80,27 @@ app.get('/cheer', () => {
 
 app.get('/prbounty', cors(), (req, res, next) => {
     console.log(req.query)
-    res.json({amount: 0.3003})
+    Coordinator.at('0x742e82e5cc14ed9813513f1357cbe047acca4f71').then(coordinator => {
+        coordinator.addressOf.call(req.query.author).then(address => {
+            JECoin.at('0x1bd22fde3ddd123e2f8b82a6b96f3f94bb1e1104').then(coinContract => {
+                coinContract.balanceOf.call(address).then(balance => {
+                    console.log(balance);
+                    res.json({amount: balance})
+
+                }).catch(err => {
+                    console.log(err);
+                    res.status(500).send({err: err})
+                });
+            }).catch(err => {
+                console.log(err);
+                res.status(500).send({err: err})
+            });
+        });
+
+    }).catch(err => {
+        console.log(err)
+        res.status(500).send({err: err})
+    });
 })
 
 app.listen(port, () => {
