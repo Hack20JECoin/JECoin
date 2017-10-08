@@ -30,8 +30,4 @@ contract Bounty {
 	function setPayee(address newPayee) {
 		payee = newPayee;
 	}
-
-	function setGithubDetails(GithubDetails newGithubDetails) {
-		githubDetails = newGithubDetails;
-	}
 }
