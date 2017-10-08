@@ -4,6 +4,8 @@ var web3 = new Web3();
 var provider = web3.setProvider(new Web3.providers.HttpProvider("http://localhost:8545"));
 // web3.eth.defaultAccount=web3.eth.accounts[0]
 
+const coordinatorAddress = '0xff87c1fb8008cff772ed0ecc561f3c56e1b8b086'
+
 // Set up contracts
 const TruffleContract = require('truffle-contract');
 
@@ -16,6 +18,8 @@ const JECoin = TruffleContract(JECoinContract);
 JECoin.setProvider(web3.currentProvider)
 Coordinator.setProvider(web3.currentProvider)
 
+web3.eth.defaultAccount = web3.eth.coinbase;
+
 if (typeof JECoin.currentProvider.sendAsync !== "function") {
     JECoin.currentProvider.sendAsync = function() {
         return JECoin.currentProvider.send.apply(JECoin.currentProvider, arguments);
@@ -26,14 +30,6 @@ if (typeof Coordinator.currentProvider.sendAsync !== "function") {
         return Coordinator.currentProvider.send.apply(Coordinator.currentProvider, arguments);
     };
 }
-
-// Coordinator.currentProvider.sendAsync = function () {
-//     return Coordinator.currentProvider.send.apply(Coordinator.currentProvider, arguments);
-// };
-//
-// JECoin.currentProvider.sendAsync = function () {
-//     return JECoin.currentProvider.send.apply(JECoin.currentProvider, arguments);
-// };
 
 // Other dependencies
 const http = require('http');
@@ -55,21 +51,37 @@ const options = {
 
 function processEvent(repo, ref, data) {
     const action = data.action
+    const repoName = data.repository.name
+    const repoOwner = data.repository.owner.login
+    const pullRequestNumber = data.pull_request.number
+    const pullRequestAuthor = data.pull_request.user.login
+    const isMerged = data.pull_request.merged
+
+    console.log(repoName)
+    console.log(repoOwner)
+    console.log(pullRequestNumber)
+    console.log(pullRequestAuthor)
 
     // If PR is merged
-    if (action === 'closed' && data.pull_request.merged === true) {
+    if (action === 'closed' && isMerged === true) {
 
         // Get the relevant address for the PR, send the funds from it to the PR creator
 
     }
 
-    if (action === 'opened') {
+    if (action === 'opened' || action === 'reopened') {
 
-        // Get new instance of Cheer from deployed CheerFactory
-
+        Coordinator.at(coordinatorAddress).then(coordinator => {
+            coordinator.createBounty.call(repoOwner, repoName, pullRequestNumber, pullRequestAuthor)
+            .then(() => console.log('Successfully created bounty'))
+            .catch(err => console.log(`Error: ${err}`));
+        })
+        .catch(err => {
+            console.log(err);
+        });
     }
 
-    console.log(data);
+    // console.log(data);
 }
 
 app.use('/webhook', require('express-github-hook')(options));
@@ -80,7 +92,7 @@ app.get('/cheer', () => {
 
 app.get('/prbounty', cors(), (req, res, next) => {
     const params = req.query;
-    Coordinator.at('0x742e82e5cc14ed9813513f1357cbe047acca4f71').then(coordinator => {
+    Coordinator.at(coordinatorAddress).then(coordinator => {
         coordinator.getBounty.call(params.org, params.repo, params.prno, params.author).then(bountyAddress => {
             JECoin.at('0x1bd22fde3ddd123e2f8b82a6b96f3f94bb1e1104').then(coinContract => {
                 coinContract.balanceOf.call(bountyAddress).then(balance => {
